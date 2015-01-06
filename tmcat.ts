@@ -24,14 +24,13 @@ export function main(): void {
             .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
             .value();
 
-    translate_output(compile_cmd, tsc_message => {
-        var message = translate_message(tsc_message, module_name, last_indices, filepaths);
-        console.log(message);
-    });
+    translate_output(compile_cmd, tsc_message =>
+        translate_message(tsc_message, module_name, last_indices, filepaths));
 }
 
-// Run each line of output from shell command 'cmd' through the function f.
-function translate_output(cmd:string, f:Function): void {
+// Run a shell command, passing each line of stdout through f() before
+// printing.
+function translate_output(cmd:string, f:(s:string)=>string): void {
     var spawn = require('child_process').spawn,
         child = spawn('bash', ['-c', 'eval ' + cmd]);
 
@@ -42,7 +41,7 @@ function translate_output(cmd:string, f:Function): void {
 
     child.on('close', () => {
         var lines = chunks.join('').split('\n').slice(0, -1);
-        _.each(lines, x => f(x));
+        _.each(lines, x => console.log(f(x)));
     });
 }
 
