@@ -24,20 +24,8 @@ export function main(): void {
             .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
             .value();
 
-    // "Translate" a line number in the concatenated module file into the
-    // corresponding filepath and line number before concatenation.
-    function translate_line_number(n:number): [string, number] {
-        if (n < 1 || n > last_indices.slice(-1)[0]) {
-            return ['', 0];
-        }
-        for (var i = 0; i < last_indices.length; i++) {
-            if (last_indices[i] >= n) break;
-        }
-        return [filepaths[i - 1], n - last_indices[i - 1]];
-    }
-
     translate_output(compile_cmd, tsc_message => {
-        var message = translate_message(tsc_message, module_name, translate_line_number);
+        var message = translate_message(tsc_message, module_name, last_indices, filepaths);
         console.log(message);
     });
 }
@@ -58,7 +46,7 @@ function translate_output(cmd:string, f:Function): void {
     });
 }
 
-function translate_message(tsc_message:string, module_name:string, translate_line_number:Function): string {
+function translate_message(tsc_message:string, module_name:string, last_indices:number[], filepaths:string[]): string {
     // Each line of tsc's output is one error message, of this form:
     // filename.ts(line_num, col_num): description
     var message_prefix = module_name + '.ts(';
@@ -70,11 +58,11 @@ function translate_message(tsc_message:string, module_name:string, translate_lin
         if (match === null) {
             return tsc_message;
         }
-        var module_line_num = match[1];
+        var module_line_num = +match[1];
         var message_suffix = match[2];
 
         // Translate.
-        var __ = translate_line_number(module_line_num);
+        var __ = translate_line_number(module_line_num, last_indices, filepaths);
         var filepath = __[0];
         var line_num = __[1];
         if (line_num === 0) {
@@ -87,6 +75,19 @@ function translate_message(tsc_message:string, module_name:string, translate_lin
         return tsc_message;
     }
 }
+
+// "Translate" a line number in the concatenated module file into the
+// corresponding filepath and line number before concatenation.
+function translate_line_number(n:number, last_indices:number[], filepaths:string[]): [string, number] {
+    if (n < 1 || n > last_indices.slice(-1)[0]) {
+        return ['', 0];
+    }
+    for (var i = 0; i < last_indices.length; i++) {
+        if (last_indices[i] >= n) break;
+    }
+    return [filepaths[i - 1], n - last_indices[i - 1]];
+}
+
 
 function parse_args(): [string, string] {
     if (process.argv.length === 5) {
