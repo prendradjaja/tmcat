@@ -43,23 +43,8 @@ export function tmtac(): void {
     var error_found = false;
 
     for_each_line_in_stdin_async(tsc_message => {
-        try {
-            var message = translate_message(tsc_message, module_name, translate_line_number);
-            console.log(message);
-        } catch (e) {
-            if (e !== Foo) {
-                throw e;
-            }
-            console.log('* ' + tsc_message);
-            error_found = true;
-        }
-    },
-    () => {
-        if (error_found) {
-            console.log('\ntmtac: Lines marked with an asterisk (*) ' +
-                'indicate that something has gone wrong.')
-                // TODO give a real explanation
-        }
+        var message = translate_message(tsc_message, module_name, translate_line_number);
+        console.log(message);
     });
 }
 
@@ -73,7 +58,7 @@ function translate_message(tsc_message:string, module_name:string, translate_lin
         var pattern = /^(\d+)(,.*)$/;
         var match = after_filename.match(pattern);
         if (match === null) {
-            throw Foo;
+            return tsc_message;
         }
         var module_line_num = match[1];
         var message_suffix = match[2];
@@ -83,7 +68,7 @@ function translate_message(tsc_message:string, module_name:string, translate_lin
         var filepath = __[0];
         var line_num = __[1];
         if (line_num === 0) {
-            throw Foo;
+            return tsc_message;
         }
 
         // Reassemble message.
@@ -108,8 +93,7 @@ function get_module_name_from_argv(caller:string): string {
 }
 
 // Call f(line) for each line in standard input.
-// After this is done, call after().
-function for_each_line_in_stdin_async(f:Function, after:Function): void {
+function for_each_line_in_stdin_async(f:Function): void {
     // Adapted from https://github.com/joyent/node/issues/7412
     // This issue is also the reason why this is an asynchronous function.
     var chunks = [];
@@ -119,7 +103,6 @@ function for_each_line_in_stdin_async(f:Function, after:Function): void {
         .on("end", () => {
             var lines = chunks.join('').split('\n').slice(0, -1);
             _.each(lines, x => f(x));
-            after();
         });
 }
 
