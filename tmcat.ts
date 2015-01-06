@@ -48,8 +48,6 @@ function translate_output(cmd:string, f:Function): void {
         child = spawn('bash', ['-c', 'eval ' + cmd]);
 
     // Adapted from https://github.com/joyent/node/issues/7412
-    // This issue is also the reason why this is an asynchronous function.
-    // TODO consider the above line. is that true?
     var chunks = [];
 
     child.stdout.on('data', chunk => chunks.push(chunk));
@@ -91,7 +89,6 @@ function translate_message(tsc_message:string, module_name:string, translate_lin
 }
 
 function parse_args(): [string, string] {
-    // TODO delete get_module_name_from_argv
     if (process.argv.length === 5) {
         var dir_name = process.argv[2];
         var compile_cmd = process.argv[4];
