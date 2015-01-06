@@ -6,22 +6,20 @@ import fs = require('fs');
 import _ = require('underscore');
 import _s = require('underscore.string');
 
-export function tmcat(): void {
-    var module_name = get_module_name_from_argv('tmcat');
-    var filepaths = get_filepaths(module_name);
-    var result = _.chain(filepaths)
-                  .map(read_file)
-                  .reduce((a,b) => a+b)
-                  .value();
+export function main(): void {
+    var __ = parse_args();
+    var module_name = __[0];
+    var compile_cmd = __[1];
 
-    fs.writeFileSync(module_name + '.ts', result);
-}
-
-export function tmtac(): void {
-    var module_name = get_module_name_from_argv('tmtac');
     var filepaths = get_filepaths(module_name);
-    var last_indices = _.chain(filepaths)
-            .map(read_file)
+    var file_contents = _.map(filepaths, read_file);
+
+    var plus = (a, b) => a + b;
+    var concatenated_code = _.reduce(file_contents, plus);
+
+    fs.writeFileSync(module_name + '.ts', concatenated_code);
+
+    var last_indices = _.chain(file_contents)
             .map(x => x.split('\n').length - 1)
             .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
             .value();
@@ -38,11 +36,27 @@ export function tmtac(): void {
         return [filepaths[i - 1], n - last_indices[i - 1]];
     }
 
-    var error_found = false;
-
-    for_each_line_in_stdin_async(tsc_message => {
+    translate_output(compile_cmd, tsc_message => {
         var message = translate_message(tsc_message, module_name, translate_line_number);
         console.log(message);
+    });
+}
+
+// Run each line of output from shell command 'cmd' through the function f.
+function translate_output(cmd:string, f:Function): void {
+    var spawn = require('child_process').spawn,
+        child = spawn('bash', ['-c', 'eval ' + cmd]);
+
+    // Adapted from https://github.com/joyent/node/issues/7412
+    // This issue is also the reason why this is an asynchronous function.
+    // TODO consider the above line. is that true?
+    var chunks = [];
+
+    child.stdout.on('data', chunk => chunks.push(chunk));
+
+    child.on('close', () => {
+        var lines = chunks.join('').split('\n').slice(0, -1);
+        _.each(lines, x => f(x));
     });
 }
 
@@ -76,32 +90,17 @@ function translate_message(tsc_message:string, module_name:string, translate_lin
     }
 }
 
-function get_module_name_from_argv(caller:string): string {
-    if (process.argv.length === 3) {
+function parse_args(): [string, string] {
+    // TODO delete get_module_name_from_argv
+    if (process.argv.length === 5) {
         var dir_name = process.argv[2];
-        check_directory_exists(dir_name, caller);
-        return dir_name;
+        var compile_cmd = process.argv[4];
+        check_directory_exists(dir_name);
+        return [dir_name, compile_cmd];
     } else {
-        console.error(caller + ': Invalid number of arguments.\n' +
-            'Usage: ' + caller + ' [module name]\n' +
-            '\n' +
-            'man ' + caller + ' for details.'); // TODO: make man pages
+        console.error('tmcat: bad args'); // TODO elaborate, document
         process.exit(1);
     }
-}
-
-// Call f(line) for each line in standard input.
-function for_each_line_in_stdin_async(f:Function): void {
-    // Adapted from https://github.com/joyent/node/issues/7412
-    // This issue is also the reason why this is an asynchronous function.
-    var chunks = [];
-
-    process.stdin
-        .on("data", chunk => chunks.push(chunk))
-        .on("end", () => {
-            var lines = chunks.join('').split('\n').slice(0, -1);
-            _.each(lines, x => f(x));
-        });
 }
 
 function get_filepaths(module_name:string): string[] {
@@ -115,9 +114,9 @@ function read_file(path): string {
     return fs.readFileSync(path, 'utf8');
 }
 
-function check_directory_exists(path:string, caller:string): void {
+function check_directory_exists(path:string): void {
     if (!directory_exists(path)) {
-        console.error(caller + ': Directory ' + path + ' does not exist.');
+        console.error('tmcat: Directory ' + path + ' does not exist.');
         process.exit(1);
     }
 }
