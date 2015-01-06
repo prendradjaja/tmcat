@@ -1,31 +1,49 @@
 /// <reference path="/home/pandu/c/dtyped/node/node.d.ts" />
 /// <reference path="/home/pandu/c/dtyped/underscore/underscore.d.ts" />
 /// <reference path="/home/pandu/c/dtyped/underscore.string/underscore.string.d.ts" />
+/// <reference path="/home/pandu/c/dtyped/minimist/minimist.d.ts" />
 
 import fs = require('fs');
 import _ = require('underscore');
 import _s = require('underscore.string');
+import minimist = require('minimist');
+
+interface Module {
+    name: string;
+    filepaths: string[];
+    last_indices: number[];
+}
 
 export function main(): void {
     var __ = parse_args();
-    var module_name = __[0];
+    var module_names = __[0];
     var compile_cmd = __[1];
 
-    var filepaths = get_filepaths(module_name);
-    var file_contents = _.map(filepaths, read_file);
+    var modules:Module[] = [];
 
-    var plus = (a, b) => a + b;
-    var concatenated_code = _.reduce(file_contents, plus);
+    _.each(module_names, module_name => {
+        var filepaths = get_filepaths(module_name);
+        var file_contents = _.map(filepaths, read_file);
 
-    fs.writeFileSync(module_name + '.ts', concatenated_code);
+        var plus = (a, b) => a + b;
+        var concatenated_code = _.reduce(file_contents, plus);
 
-    var last_indices = _.chain(file_contents)
-            .map(x => x.split('\n').length - 1)
-            .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
-            .value();
+        fs.writeFileSync(module_name + '.ts', concatenated_code);
+
+        var last_indices = _.chain(file_contents)
+                .map(x => x.split('\n').length - 1)
+                .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
+                .value();
+
+        modules.push({
+            name: module_name,
+            filepaths: filepaths,
+            last_indices: last_indices
+        });
+    });
 
     translate_output(compile_cmd, tsc_message =>
-        translate_message(tsc_message, module_name, last_indices, filepaths));
+        translate_message(tsc_message, modules));
 }
 
 // Run a shell command, passing each line of stdout through f() before
@@ -45,39 +63,48 @@ function translate_output(cmd:string, f:(s:string)=>string): void {
     });
 }
 
-function translate_message(tsc_message:string, module_name:string, last_indices:number[], filepaths:string[]): string {
+function translate_message(tsc_message:string, modules:Module[]): string {
     // Each line of tsc's output is one error message, of this form:
     // filename.ts(line_num, col_num): description
-    var message_prefix = module_name + '.ts(';
-    if (_s.startsWith(tsc_message, message_prefix)) {
-        // Parse into line number and everything else.
-        var after_filename = tsc_message.slice(message_prefix.length);
-        var pattern = /^(\d+)(,.*)$/;
-        var match = after_filename.match(pattern);
-        if (match === null) {
-            return tsc_message;
-        }
-        var module_line_num = +match[1];
-        var message_suffix = match[2];
+    for (var i in modules) {
+        var module = modules[i];
 
-        // Translate.
-        var __ = translate_line_number(module_line_num, last_indices, filepaths);
-        var filepath = __[0];
-        var line_num = __[1];
-        if (line_num === 0) {
-            return tsc_message;
-        }
+        var module_name = module.name;
+        var filepaths = module.filepaths;
+        var last_indices = module.last_indices;
 
-        // Reassemble message.
-        return filepath + '(' + line_num + message_suffix;
-    } else {
-        return tsc_message;
+        var message_prefix = module_name + '.ts(';
+        if (_s.startsWith(tsc_message, message_prefix)) {
+            // Parse into line number and everything else.
+            var after_filename = tsc_message.slice(message_prefix.length);
+            var pattern = /^(\d+)(,.*)$/;
+            var match = after_filename.match(pattern);
+            if (match === null) {
+                return tsc_message;
+            }
+            var module_line_num = +match[1];
+            var message_suffix = match[2];
+
+            // Translate.
+            var __ = translate_line_number(module_line_num, module);
+            var filepath = __[0];
+            var line_num = __[1];
+            if (line_num === 0) {
+                return tsc_message;
+            }
+
+            // Reassemble message.
+            return filepath + '(' + line_num + message_suffix;
+        }
     }
+    return tsc_message;
 }
 
 // "Translate" a line number in the concatenated module file into the
 // corresponding filepath and line number before concatenation.
-function translate_line_number(n:number, last_indices:number[], filepaths:string[]): [string, number] {
+function translate_line_number(n:number, module:Module): [string, number] {
+    var filepaths = module.filepaths;
+    var last_indices = module.last_indices;
     if (n < 1 || n > last_indices.slice(-1)[0]) {
         return ['', 0];
     }
@@ -88,16 +115,21 @@ function translate_line_number(n:number, last_indices:number[], filepaths:string
 }
 
 
-function parse_args(): [string, string] {
-    if (process.argv.length === 5) {
-        var dir_name = process.argv[2];
-        var compile_cmd = process.argv[4];
-        check_directory_exists(dir_name);
-        return [dir_name, compile_cmd];
+function parse_args(): [string[], string] {
+    var args = minimist(process.argv.slice(2));
+    if (valid_args(args)) {
+        var module_names = args._;
+        var compile_cmd = <string> args['c'];
+        _.each(module_names, check_directory_exists);
+        return [module_names, compile_cmd];
     } else {
         console.error('tmcat: bad args'); // TODO elaborate, document
         process.exit(1);
     }
+}
+
+function valid_args(args) {
+    return 'c' in args && typeof(args['c']) === 'string';
 }
 
 function get_filepaths(module_name:string): string[] {
