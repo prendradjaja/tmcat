@@ -6,8 +6,6 @@ import fs = require('fs');
 import _ = require('underscore');
 import _s = require('underscore.string');
 
-var Foo = {}; // TODO better name
-
 export function tmcat(): void {
     var module_name = get_module_name_from_argv('tmcat');
     var filepaths = get_filepaths(module_name);
