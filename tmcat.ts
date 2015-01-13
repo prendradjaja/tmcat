@@ -1,7 +1,7 @@
-/// <reference path="/home/pandu/c/dtyped/node/node.d.ts" />
-/// <reference path="/home/pandu/c/dtyped/underscore/underscore.d.ts" />
-/// <reference path="/home/pandu/c/dtyped/underscore.string/underscore.string.d.ts" />
-/// <reference path="/home/pandu/c/dtyped/minimist/minimist.d.ts" />
+/// <reference path="external/node.d.ts" />
+/// <reference path="external/underscore.d.ts" />
+/// <reference path="external/underscore.string.d.ts" />
+/// <reference path="external/minimist.d.ts" />
 
 import fs = require('fs');
 import _ = require('underscore');
