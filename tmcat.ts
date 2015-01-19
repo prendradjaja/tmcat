@@ -57,8 +57,6 @@ export function main(): void {
                 .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
                 .value();
 
-        console.log(last_indices);
-
         modules.push({
             name: module_name,
             filepaths: filepaths,
