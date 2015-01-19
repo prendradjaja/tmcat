@@ -1,0 +1,9 @@
+MyModule.ts(1,1): error foo
+MyModule.ts(2,1): error foo
+MyModule.ts(3,1): error foo
+MyModule.ts(4,1): error foo
+MyModule.ts(5,1): error foo
+MyModule.ts(6,1): error foo
+MyModule.ts(7,1): error foo
+MyModule.ts(8,1): error foo
+MyModule.ts(9,1): error foo
