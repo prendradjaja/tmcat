@@ -51,8 +51,6 @@ export function main(): void {
 // Run a shell command, passing each line of stdout through f() before
 // printing.
 function translate_output(cmd:string, f:(s:string)=>string): void {
-    // var spawn = require('child_process').spawn,
-    //     child = spawn('bash', ['-c', 'eval ' + cmd]);
     var output = shelljs.exec(cmd).output;
     var lines = output.split('\n').slice(0, -1);
     _.each(lines, x => console.log(f(x)));
