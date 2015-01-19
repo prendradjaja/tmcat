@@ -1,5 +1,5 @@
-﻿// Commit c7c896884baaee682f7d58e233b31e65ae0a7031
-// Modified from DefinitelyTyped: refers to node.d.ts in current directory
+﻿// This file has some modifications from the DefinitelyTyped version.
+// Based on commit c7c896884baaee682f7d58e233b31e65ae0a7031
 
 // Type definitions for ShellJS v0.3.0
 // Project: http://shelljs.org
@@ -438,8 +438,6 @@ declare module "shelljs"
      */
     export var env: { [key: string]: string };
 
-    /*
-
     // Not yet implemented due to implementation issues (constant overloads and return types).
     // See: https://github.com/arturadib/shelljs#execcommand--options--callback
 
@@ -448,11 +446,9 @@ declare module "shelljs"
 
     interface ExecOptions
     {
-        silent: boolean;
-        async: boolean;
+        silent?: boolean;
+        async?: boolean;
     }
-
-    */
 
     /**
      * Executes the given command synchronously.

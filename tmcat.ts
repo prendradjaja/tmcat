@@ -51,7 +51,7 @@ export function main(): void {
 // Run a shell command, passing each line of stdout through f() before
 // printing.
 function translate_output(cmd:string, f:(s:string)=>string): void {
-    var output = shelljs.exec(cmd).output;
+    var output: string = shelljs.exec(cmd, {silent:true}).output;
     var lines = output.split('\n').slice(0, -1);
     _.each(lines, x => console.log(f(x)));
 }
