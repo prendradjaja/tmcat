@@ -1,6 +1,6 @@
-/// <reference path="../external/mocha.d.ts" />
-/// <reference path="../external/chai.d.ts" />
-/// <reference path="../external/shelljs.d.ts" />
+/// <reference path="../typings/mocha.d.ts" />
+/// <reference path="../typings/chai.d.ts" />
+/// <reference path="../typings/shelljs.d.ts" />
 
 import sh = require('shelljs');
 import chai = require('chai');

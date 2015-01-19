@@ -1,8 +1,8 @@
-/// <reference path="external/node.d.ts" />
-/// <reference path="external/underscore.d.ts" />
-/// <reference path="external/underscore.string.d.ts" />
-/// <reference path="external/minimist.d.ts" />
-/// <reference path="external/shelljs.d.ts" />
+/// <reference path="typings/node.d.ts" />
+/// <reference path="typings/underscore.d.ts" />
+/// <reference path="typings/underscore.string.d.ts" />
+/// <reference path="typings/minimist.d.ts" />
+/// <reference path="typings/shelljs.d.ts" />
 
 import fs = require('fs');
 import _ = require('underscore');
