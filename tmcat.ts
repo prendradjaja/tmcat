@@ -2,11 +2,13 @@
 /// <reference path="external/underscore.d.ts" />
 /// <reference path="external/underscore.string.d.ts" />
 /// <reference path="external/minimist.d.ts" />
+/// <reference path="external/shelljs.d.ts" />
 
 import fs = require('fs');
 import _ = require('underscore');
 import _s = require('underscore.string');
 import minimist = require('minimist');
+import shelljs = require('shelljs');
 
 interface Module {
     name: string;
@@ -49,18 +51,11 @@ export function main(): void {
 // Run a shell command, passing each line of stdout through f() before
 // printing.
 function translate_output(cmd:string, f:(s:string)=>string): void {
-    var spawn = require('child_process').spawn,
-        child = spawn('bash', ['-c', 'eval ' + cmd]);
-
-    // Adapted from https://github.com/joyent/node/issues/7412
-    var chunks = [];
-
-    child.stdout.on('data', chunk => chunks.push(chunk));
-
-    child.on('close', () => {
-        var lines = chunks.join('').split('\n').slice(0, -1);
-        _.each(lines, x => console.log(f(x)));
-    });
+    // var spawn = require('child_process').spawn,
+    //     child = spawn('bash', ['-c', 'eval ' + cmd]);
+    var output = shelljs.exec(cmd).output;
+    var lines = output.split('\n').slice(0, -1);
+    _.each(lines, x => console.log(f(x)));
 }
 
 function translate_message(tsc_message:string, modules:Module[]): string {
