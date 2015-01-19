@@ -1,10 +1,13 @@
-﻿// Type definitions for ShellJS v0.3.0
+﻿// Commit c7c896884baaee682f7d58e233b31e65ae0a7031
+// Modified from DefinitelyTyped: refers to node.d.ts in current directory
+
+// Type definitions for ShellJS v0.3.0
 // Project: http://shelljs.org
 // Definitions by: Niklas Mollenhauer <https://github.com/nikeee>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
 
-///<reference path="../node/node.d.ts"/>
+///<reference path="node.d.ts"/>
 
 declare module "shelljs"
 {
