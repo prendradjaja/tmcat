@@ -6,7 +6,7 @@ clean :
 	rm tmcat.js
 
 tests :
-	tsc simple-tests/test.ts --module commonjs
+	tsc tests/test.ts --module commonjs
 
 runtests :
-	cd simple-tests; ../node_modules/mocha/bin/mocha test.js
+	cd tests; ../node_modules/mocha/bin/mocha test.js
