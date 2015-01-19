@@ -10,10 +10,30 @@ import _s = require('underscore.string');
 import minimist = require('minimist');
 import shelljs = require('shelljs');
 
+// Various information about a module. This is needed for translation.
 interface Module {
     name: string;
     filepaths: string[];
     last_indices: number[];
+        // last_indices holds the line number of the last line in each file of
+        // the module, plus a zero at the beginning. For example, if your
+        // module looks like:
+        //
+        //     SomeModule/bar.ts:
+        //         export bar = '|';
+        //
+        //     SomeModule/foo.ts:
+        //         export foo = 'foo';
+        //         export foo2 = 'foo2';
+        //
+        // Then, once concatenated, SomeModule.ts will be:
+        //     export bar = '|';
+        //     export foo = 'foo';
+        //     export foo2 = 'foo2';
+        //
+        // Line 1 is the end of bar.ts, and line 3 is the end of foo.ts. So,
+        // with the added zero at the beginning, last_indices will be [0, 1,
+        // 3].
 }
 
 export function main(): void {
@@ -37,6 +57,8 @@ export function main(): void {
                 .reduce((memo, num) => memo.concat(memo.slice(-1)[0] + num), [0])
                 .value();
 
+        console.log(last_indices);
+
         modules.push({
             name: module_name,
             filepaths: filepaths,
@@ -56,6 +78,11 @@ function translate_output(cmd:string, f:(s:string)=>string): void {
     _.each(lines, x => console.log(f(x)));
 }
 
+// Translate the given string, (which should be one line of tsc output) e.g.
+// from
+//    Foo.ts(5,1): error ...
+// to
+//    Foo/bar.ts(2,1): error ...
 function translate_message(tsc_message:string, modules:Module[]): string {
     // Each line of tsc's output is one error message, of this form:
     // filename.ts(line_num, col_num): description
@@ -93,7 +120,7 @@ function translate_message(tsc_message:string, modules:Module[]): string {
     return tsc_message;
 }
 
-// "Translate" a line number in the concatenated module file into the
+// Translate a line number in the concatenated module file into the
 // corresponding filepath and line number before concatenation.
 function translate_line_number(n:number, module:Module): [string, number] {
     var filepaths = module.filepaths;
